@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - elastic_network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.17.0
+    volumes:
+      - ./mysql-connector-java-8.0.28.jar:/usr/share/logstash/mysql-connector-java-8.0.28.jar
+      - ./logstash/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash_data:/usr/share/logstash/data
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    user: "1000:1000"
+    depends_on:
+      - elasticsearch
+    networks:
+      - elastic_network
+
+volumes:
+  elasticsearch_data:
+
+networks:
+  elastic_network:
+    driver: bridge
